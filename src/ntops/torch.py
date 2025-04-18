@@ -26,6 +26,7 @@ import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.ne
 import ntops.kernels.neg
+import ntops.kernels.pow
 import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
@@ -310,6 +311,17 @@ def neg(input, *, out=None):
     kernel = ntops.kernels.neg.make(input.ndim)
 
     kernel(input, out)
+
+    return out
+
+
+def pow(input, exponent, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.pow.make(input.ndim)
+
+    kernel(input, exponent, out)
 
     return out
 
