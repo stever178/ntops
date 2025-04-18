@@ -20,6 +20,10 @@ classifiers = [
 Homepage = "https://github.com/InfiniTensor/ntops"
 Issues = "https://github.com/InfiniTensor/ntops/issues"
 
+[project.optional-dependencies]
+testing = ["pytest", "pytest-cov"]
+all = ["ntops[testing]"]
+
 [tool.ruff]
 src = [".", "src", "tests"]
 
