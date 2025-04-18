@@ -1,3 +1,5 @@
+import functools
+
 import ninetoothed
 import ninetoothed.language as ntl
 import torch
@@ -33,9 +35,6 @@ def application(input, other, output):
     output = accumulator
 
 
-kernel = ninetoothed.make(arrangement, application, (Tensor(2), Tensor(2), Tensor(2)))
-
-
 def mm(input, other, output=None):
     m, _ = input.shape
     _, n = other.shape
@@ -43,6 +42,13 @@ def mm(input, other, output=None):
     if output is None:
         output = torch.empty((m, n), dtype=input.dtype, device=input.device)
 
+    kernel = _make()
+
     kernel(input, other, output)
 
     return output
+
+
+@functools.cache
+def _make():
+    return ninetoothed.make(arrangement, application, (Tensor(2), Tensor(2), Tensor(2)))

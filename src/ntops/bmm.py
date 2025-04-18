@@ -1,3 +1,5 @@
+import functools
+
 import ninetoothed
 import torch
 from ninetoothed import Tensor
@@ -24,9 +26,6 @@ def arrangement(input, other, output):
     return input_arranged, other_arranged, output_arranged
 
 
-kernel = ninetoothed.make(arrangement, application, (Tensor(3), Tensor(3), Tensor(3)))
-
-
 def bmm(input, other, output=None):
     b, m, _ = input.shape
     _, _, n = other.shape
@@ -34,6 +33,13 @@ def bmm(input, other, output=None):
     if output is None:
         output = torch.empty((b, m, n), dtype=input.dtype, device=input.device)
 
+    kernel = _make()
+
     kernel(input, other, output)
 
     return output
+
+
+@functools.cache
+def _make():
+    return ninetoothed.make(arrangement, application, (Tensor(3), Tensor(3), Tensor(3)))
