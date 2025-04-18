@@ -6,5 +6,6 @@ from ntops.div import div
 from ntops.exp import exp
 from ntops.gelu import gelu
 from ntops.mm import mm
+from ntops.mul import mul
 
-__all__ = ["abs", "add", "addmm", "bmm", "div", "exp", "gelu", "mm"]
+__all__ = ["abs", "add", "addmm", "bmm", "div", "exp", "gelu", "mm", "mul"]
