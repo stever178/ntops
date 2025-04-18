@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [{ name = "Jiacheng Huang", email = "huangjiacheng0709@outlook.com" }]
 description = "NineToothed operators for LLMs."
 readme = "README.md"
-dependencies = ["ninetoothed>=0.16.0"]
+dependencies = ["ninetoothed>=0.16.0", "torch"]
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
