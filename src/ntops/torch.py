@@ -30,6 +30,7 @@ import ntops.kernels.pow
 import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
+import ntops.kernels.silu
 import ntops.kernels.sin
 import ntops.kernels.softmax
 import ntops.kernels.sub
@@ -360,6 +361,19 @@ def sigmoid(input, *, out=None):
     kernel(input, out)
 
     return out
+
+
+def silu(input, inplace=False):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.silu.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
 
 
 def sin(input, *, out=None):
