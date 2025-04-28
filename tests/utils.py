@@ -21,6 +21,10 @@ def generate_arguments():
     return "shape, dtype, atol, rtol", arguments
 
 
+def gauss(mu=0.0, sigma=1.0):
+    return random.gauss(mu, sigma)
+
+
 def _random_shape(ndim, min_num_elements=2**8, max_num_elements=2**10):
     num_elements = random.randint(min_num_elements, max_num_elements)
 
