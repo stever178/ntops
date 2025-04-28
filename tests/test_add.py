@@ -1,11 +1,9 @@
-import random
-
 import pytest
 import torch
 
 import ntops
 from tests.skippers import skip_if_cuda_not_available
-from tests.utils import generate_arguments
+from tests.utils import gauss, generate_arguments
 
 
 @skip_if_cuda_not_available
@@ -15,7 +13,7 @@ def test_cuda(shape, dtype, atol, rtol):
 
     input = torch.randn(shape, dtype=dtype, device=device)
     other = torch.randn(shape, dtype=dtype, device=device)
-    alpha = random.gauss()
+    alpha = gauss()
 
     ninetoothed_output = ntops.add(input, other, alpha)
     reference_output = input + alpha * other
