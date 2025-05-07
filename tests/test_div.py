@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-import ntops
+import ntops.torch
 from tests.skippers import skip_if_cuda_not_available
 from tests.utils import generate_arguments
 
@@ -19,7 +19,7 @@ def test_cuda(shape, dtype, atol, rtol):
         if rounding_mode == "trunc":
             continue
 
-        ninetoothed_output = ntops.div(input, other, rounding_mode=rounding_mode)
+        ninetoothed_output = ntops.torch.div(input, other, rounding_mode=rounding_mode)
         reference_output = torch.div(input, other, rounding_mode=rounding_mode)
 
         assert torch.allclose(

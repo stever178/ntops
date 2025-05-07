@@ -3,10 +3,9 @@ import math
 
 import ninetoothed
 import ninetoothed.language as ntl
-import torch
 from ninetoothed import Tensor
 
-from ntops import element_wise
+from ntops.kernels.element_wise import arrangement
 
 
 def default_application(input, output):
@@ -28,23 +27,13 @@ def tanh_application(input, output):
     )
 
 
-def gelu(input, approximate="none"):
-    output = torch.empty_like(input)
-
-    kernel = _make(input.ndim, approximate)
-
-    kernel(input, output)
-
-    return output
-
-
 @functools.cache
-def _make(ndim, approximate):
-    tensors = (Tensor(ndim), Tensor(ndim))
-
+def make(ndim, approximate):
     if approximate == "tanh":
         application = tanh_application
     else:
         application = default_application
 
-    return ninetoothed.make(element_wise.arrangement, application, tensors)
+    tensors = (Tensor(ndim), Tensor(ndim))
+
+    return ninetoothed.make(arrangement, application, tensors)

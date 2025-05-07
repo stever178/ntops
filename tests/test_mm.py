@@ -3,7 +3,7 @@ import random
 import pytest
 import torch
 
-import ntops
+import ntops.torch
 from tests.skippers import skip_if_cuda_not_available
 
 
@@ -38,7 +38,7 @@ def test_cuda(m, n, k, dtype, atol, rtol):
     input = torch.randn((m, k), dtype=dtype, device=device)
     other = torch.randn((k, n), dtype=dtype, device=device)
 
-    ninetoothed_output = ntops.mm(input, other)
+    ninetoothed_output = ntops.torch.mm(input, other)
     reference_output = torch.mm(input, other)
 
     assert torch.allclose(ninetoothed_output, reference_output, atol=atol, rtol=rtol)

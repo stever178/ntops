@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-import ntops
+import ntops.torch
 from tests.skippers import skip_if_cuda_not_available
 from tests.test_mm import generate_arguments
 from tests.utils import gauss
@@ -18,7 +18,7 @@ def test_cuda(m, n, k, dtype, atol, rtol):
     beta = gauss()
     alpha = gauss()
 
-    ninetoothed_output = ntops.addmm(input, x, y, beta=beta, alpha=alpha)
+    ninetoothed_output = ntops.torch.addmm(input, x, y, beta=beta, alpha=alpha)
     reference_output = torch.addmm(input, x, y, beta=beta, alpha=alpha)
 
     assert torch.allclose(ninetoothed_output, reference_output, atol=atol, rtol=rtol)
