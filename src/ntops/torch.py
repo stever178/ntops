@@ -120,15 +120,14 @@ def mul(input, other, *, out=None):
     return out
 
 
-def relu(input, out=None):
-    if out is None:
-        out = torch.empty_like(input)
+def relu(input, inplace=False):
+    output = torch.empty_like(input)
 
-    kernel = ntops.kernels.relu.make(input.ndim)
+    kernel = ntops.kernels.relu.make(input.ndim, inplace)
 
-    kernel(input, out)
+    kernel(input, output)
 
-    return out
+    return output
 
 
 def rsqrt(input, *, out=None):
