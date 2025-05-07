@@ -120,7 +120,7 @@ def mul(input, other, *, out=None):
     return out
 
 
-def relu(input, *, out=None):
+def relu(input, out=None):
     if out is None:
         out = torch.empty_like(input)
 
