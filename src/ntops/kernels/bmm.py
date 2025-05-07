@@ -1,10 +1,9 @@
 import functools
 
 import ninetoothed
-import torch
 from ninetoothed import Tensor
 
-from ntops.mm import BLOCK_SIZE_K, BLOCK_SIZE_M, BLOCK_SIZE_N, application
+from ntops.kernels.mm import BLOCK_SIZE_K, BLOCK_SIZE_M, BLOCK_SIZE_N, application
 
 
 def arrangement(input, other, output):
@@ -26,20 +25,6 @@ def arrangement(input, other, output):
     return input_arranged, other_arranged, output_arranged
 
 
-def bmm(input, other, output=None):
-    b, m, _ = input.shape
-    _, _, n = other.shape
-
-    if output is None:
-        output = torch.empty((b, m, n), dtype=input.dtype, device=input.device)
-
-    kernel = _make()
-
-    kernel(input, other, output)
-
-    return output
-
-
 @functools.cache
-def _make():
+def make():
     return ninetoothed.make(arrangement, application, (Tensor(3), Tensor(3), Tensor(3)))

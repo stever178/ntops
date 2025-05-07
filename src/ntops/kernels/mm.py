@@ -2,7 +2,6 @@ import functools
 
 import ninetoothed
 import ninetoothed.language as ntl
-import torch
 from ninetoothed import Tensor
 
 BLOCK_SIZE_M = ninetoothed.block_size()
@@ -35,20 +34,6 @@ def application(input, other, output):
     output = accumulator
 
 
-def mm(input, other, output=None):
-    m, _ = input.shape
-    _, n = other.shape
-
-    if output is None:
-        output = torch.empty((m, n), dtype=input.dtype, device=input.device)
-
-    kernel = _make()
-
-    kernel(input, other, output)
-
-    return output
-
-
 @functools.cache
-def _make():
+def make():
     return ninetoothed.make(arrangement, application, (Tensor(2), Tensor(2), Tensor(2)))
