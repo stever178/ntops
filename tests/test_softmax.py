@@ -3,7 +3,7 @@ import random
 import pytest
 import torch
 
-import ntops
+import ntops.torch
 from tests.skippers import skip_if_cuda_not_available
 from tests.utils import generate_arguments
 
@@ -15,8 +15,9 @@ def test_cuda(shape, dtype, atol, rtol):
 
     input = torch.randn(shape, dtype=dtype, device=device)
     dim = random.randint(0, input.ndim - 1)
+    dtype = random.choice([torch.float16, torch.float32, torch.float64])
 
-    ninetoothed_output = ntops.softmax(input, dim)
-    reference_output = torch.nn.functional.softmax(input, dim=dim)
+    ninetoothed_output = ntops.torch.softmax(input, dim, dtype)
+    reference_output = torch.nn.functional.softmax(input, dim=dim, dtype=dtype)
 
     assert torch.allclose(ninetoothed_output, reference_output, atol=atol, rtol=rtol)
