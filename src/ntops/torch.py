@@ -121,9 +121,12 @@ def mul(input, other, *, out=None):
 
 
 def relu(input, inplace=False):
-    output = torch.empty_like(input)
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
 
-    kernel = ntops.kernels.relu.make(input.ndim, inplace)
+    kernel = ntops.kernels.relu.make(input.ndim)
 
     kernel(input, output)
 
