@@ -14,9 +14,9 @@ def test_cuda(shape, dtype, atol, rtol):
 
     input = torch.randn(shape, dtype=dtype, device=device)
 
-    for replace in (False, True):
-        ninetoothed_output = ntops.torch.relu(input, replace)
-        reference_output = F.relu(input, replace)
+    for inplace in (False, True):
+        ninetoothed_output = ntops.torch.relu(input, inplace)
+        reference_output = F.relu(input, inplace)
 
         assert torch.allclose(
             ninetoothed_output, reference_output, atol=atol, rtol=rtol
