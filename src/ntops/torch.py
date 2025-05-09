@@ -10,6 +10,7 @@ import ntops.kernels.gelu
 import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.rsqrt
+import ntops.kernels.sigmoid
 
 
 def abs(input, *, out=None):
@@ -124,6 +125,17 @@ def rsqrt(input, *, out=None):
         out = torch.empty_like(input)
 
     kernel = ntops.kernels.rsqrt.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
+def sigmoid(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sigmoid.make(input.ndim)
 
     kernel(input, out)
 
