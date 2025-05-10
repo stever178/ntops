@@ -4,13 +4,16 @@ import ntops.kernels.abs
 import ntops.kernels.add
 import ntops.kernels.addmm
 import ntops.kernels.bmm
+import ntops.kernels.cos
 import ntops.kernels.div
 import ntops.kernels.exp
 import ntops.kernels.gelu
 import ntops.kernels.mm
 import ntops.kernels.mul
+import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
+import ntops.kernels.sin
 
 
 def abs(input, *, out=None):
@@ -59,6 +62,17 @@ def bmm(input, mat2, *, out=None):
     kernel = ntops.kernels.bmm.make()
 
     kernel(input, mat2, out)
+
+    return out
+
+
+def cos(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.cos.make(input.ndim)
+
+    kernel(input, out)
 
     return out
 
@@ -120,6 +134,19 @@ def mul(input, other, *, out=None):
     return out
 
 
+def relu(input, inplace=False):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.relu.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
+
+
 def rsqrt(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -136,6 +163,17 @@ def sigmoid(input, *, out=None):
         out = torch.empty_like(input)
 
     kernel = ntops.kernels.sigmoid.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
+def sin(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sin.make(input.ndim)
 
     kernel(input, out)
 
