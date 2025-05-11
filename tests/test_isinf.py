@@ -13,10 +13,15 @@ def test_cuda(shape, dtype, atol, rtol):
 
     def generate_inf_tensor(shape, dtype, device):
         x = torch.randn(shape, dtype=dtype, device=device)
-        inf_prob = 0.5
-        mask = torch.rand(shape) < inf_prob
+
+        probs = (0.2, 0.6)
+        prob_tensor = torch.rand(shape, device=device)
+
+        mask = (probs[0] < prob_tensor) & (prob_tensor < probs[1])
         x[mask] = float("inf")
-        x[~mask] = float("-inf")
+        mask = probs[1] < prob_tensor
+        x[mask] = float("-inf")
+
         return x
 
     input = generate_inf_tensor(shape, dtype, device)
