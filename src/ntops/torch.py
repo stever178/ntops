@@ -10,6 +10,7 @@ import ntops.kernels.eq
 import ntops.kernels.exp
 import ntops.kernels.gelu
 import ntops.kernels.isinf
+import ntops.kernels.isnan
 import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.ne
@@ -128,6 +129,16 @@ def isinf(input):
     output = torch.empty_like(input)
 
     kernel = ntops.kernels.isinf.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
+
+
+def isnan(input):
+    output = torch.empty_like(input)
+
+    kernel = ntops.kernels.isnan.make(input.ndim)
 
     kernel(input, output)
 
