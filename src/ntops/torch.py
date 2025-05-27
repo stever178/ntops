@@ -9,6 +9,7 @@ import ntops.kernels.div
 import ntops.kernels.eq
 import ntops.kernels.exp
 import ntops.kernels.gelu
+import ntops.kernels.gt
 import ntops.kernels.isinf
 import ntops.kernels.isnan
 import ntops.kernels.mm
@@ -123,6 +124,17 @@ def gelu(input, approximate="none"):
     kernel(input, output)
 
     return output
+
+
+def gt(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.gt.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
 
 
 def isinf(input):
