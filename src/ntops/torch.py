@@ -23,6 +23,7 @@ import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
 import ntops.kernels.sin
+import ntops.kernels.softmax
 import ntops.kernels.tanh
 
 
@@ -285,6 +286,18 @@ def sin(input, *, out=None):
     kernel(input, out)
 
     return out
+
+
+def softmax(input, dim, dtype=None):
+    tensor_dtype = dtype if dtype is not None else input.dtype
+
+    output = torch.empty_like(input, dtype=tensor_dtype)
+
+    kernel = ntops.kernels.softmax.make(input.ndim, dim)
+
+    kernel(input, output)
+
+    return output
 
 
 def tanh(input, *, out=None):
