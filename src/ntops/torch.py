@@ -18,6 +18,7 @@ import ntops.kernels.lt
 import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.ne
+import ntops.kernels.neg
 import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
@@ -225,6 +226,17 @@ def ne(input, other, *, out=None):
     kernel = ntops.kernels.ne.make(input.ndim)
 
     kernel(input, other, out)
+
+    return out
+
+
+def neg(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.neg.make(input.ndim)
+
+    kernel(input, out)
 
     return out
 
