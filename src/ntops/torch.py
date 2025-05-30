@@ -81,7 +81,7 @@ def bitwise_not(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.bitwise_not.make(input.ndim)
+    kernel = ntops.kernels.bitwise_not.make(input.ndim, input.dtype == torch.bool)
 
     kernel(input, out)
 
