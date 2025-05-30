@@ -14,6 +14,7 @@ import ntops.kernels.gt
 import ntops.kernels.isinf
 import ntops.kernels.isnan
 import ntops.kernels.le
+import ntops.kernels.lt
 import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.ne
@@ -170,6 +171,20 @@ def isnan(input):
     return output
 
 
+def mm(input, mat2, *, out=None):
+    m, _ = input.shape
+    _, n = mat2.shape
+
+    if out is None:
+        out = torch.empty((m, n), dtype=input.dtype, device=input.device)
+
+    kernel = ntops.kernels.mm.make()
+
+    kernel(input, mat2, out)
+
+    return out
+
+
 def le(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -181,16 +196,13 @@ def le(input, other, *, out=None):
     return out
 
 
-def mm(input, mat2, *, out=None):
-    m, _ = input.shape
-    _, n = mat2.shape
-
+def lt(input, other, *, out=None):
     if out is None:
-        out = torch.empty((m, n), dtype=input.dtype, device=input.device)
+        out = torch.empty_like(input)
 
-    kernel = ntops.kernels.mm.make()
+    kernel = ntops.kernels.lt.make(input.ndim)
 
-    kernel(input, mat2, out)
+    kernel(input, other, out)
 
     return out
 
