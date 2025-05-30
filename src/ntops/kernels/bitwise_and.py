@@ -1,21 +1,13 @@
 import functools
 
 import ninetoothed
-import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
 from ntops.kernels.element_wise import arrangement
 
 
 def application(input, other, output):
-    output = ntl.inline_asm_elementwise(  # noqa: F841
-        "and.b32 $0, $1, $2;",
-        "=r,r,r",
-        args=[input, other],
-        dtype=input.dtype,
-        is_pure=True,
-        pack=1,
-    )
+    output = input & other  # noqa: F841
 
 
 @functools.cache
