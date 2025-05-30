@@ -4,6 +4,7 @@ import ntops.kernels.abs
 import ntops.kernels.add
 import ntops.kernels.addmm
 import ntops.kernels.bitwise_and
+import ntops.kernels.bitwise_not
 import ntops.kernels.bitwise_or
 import ntops.kernels.bmm
 import ntops.kernels.cos
@@ -72,6 +73,17 @@ def bitwise_and(input, other, *, out=None):
     kernel = ntops.kernels.bitwise_and.make(input.ndim)
 
     kernel(input, other, out)
+
+    return out
+
+
+def bitwise_not(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.bitwise_not.make(input.ndim, input.dtype == torch.bool)
+
+    kernel(input, out)
 
     return out
 
