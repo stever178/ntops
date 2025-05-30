@@ -4,13 +4,26 @@ import ntops.kernels.abs
 import ntops.kernels.add
 import ntops.kernels.addmm
 import ntops.kernels.bmm
+import ntops.kernels.cos
 import ntops.kernels.div
+import ntops.kernels.eq
 import ntops.kernels.exp
+import ntops.kernels.ge
 import ntops.kernels.gelu
+import ntops.kernels.gt
+import ntops.kernels.isinf
+import ntops.kernels.isnan
+import ntops.kernels.le
+import ntops.kernels.lt
 import ntops.kernels.mm
 import ntops.kernels.mul
+import ntops.kernels.ne
+import ntops.kernels.relu
 import ntops.kernels.rsqrt
+import ntops.kernels.sigmoid
+import ntops.kernels.sin
 import ntops.kernels.softmax
+import ntops.kernels.tanh
 
 
 def abs(input, *, out=None):
@@ -63,6 +76,17 @@ def bmm(input, mat2, *, out=None):
     return out
 
 
+def cos(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.cos.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
 def div(input, other, *, rounding_mode=None, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -85,10 +109,63 @@ def exp(input, *, out=None):
     return out
 
 
+def ge(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.ge.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def eq(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.eq.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
 def gelu(input, approximate="none"):
     output = torch.empty_like(input)
 
     kernel = ntops.kernels.gelu.make(input.ndim, approximate)
+
+    kernel(input, output)
+
+    return output
+
+
+def gt(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.gt.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def isinf(input):
+    output = torch.empty_like(input)
+
+    kernel = ntops.kernels.isinf.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
+
+
+def isnan(input):
+    output = torch.empty_like(input)
+
+    kernel = ntops.kernels.isnan.make(input.ndim)
 
     kernel(input, output)
 
@@ -109,6 +186,28 @@ def mm(input, mat2, *, out=None):
     return out
 
 
+def le(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.le.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def lt(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.lt.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
 def mul(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -120,11 +219,57 @@ def mul(input, other, *, out=None):
     return out
 
 
+def ne(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.ne.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def relu(input, inplace=False):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.relu.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
+
+
 def rsqrt(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
     kernel = ntops.kernels.rsqrt.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
+def sigmoid(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sigmoid.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
+def sin(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sin.make(input.ndim)
 
     kernel(input, out)
 
@@ -141,3 +286,14 @@ def softmax(input, dim, dtype=None):
     kernel(input, output)
 
     return output
+
+
+def tanh(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.tanh.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
