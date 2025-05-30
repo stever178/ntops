@@ -7,6 +7,7 @@ import ntops.kernels.bitwise_and
 import ntops.kernels.bitwise_not
 import ntops.kernels.bitwise_or
 import ntops.kernels.bmm
+import ntops.kernels.clamp
 import ntops.kernels.cos
 import ntops.kernels.div
 import ntops.kernels.eq
@@ -109,6 +110,17 @@ def bmm(input, mat2, *, out=None):
     kernel = ntops.kernels.bmm.make()
 
     kernel(input, mat2, out)
+
+    return out
+
+
+def clamp(input, min=None, max=None, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.clamp.make(input.ndim)
+
+    kernel(input, min, max, out)
 
     return out
 
