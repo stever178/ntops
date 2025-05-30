@@ -6,15 +6,24 @@ import ntops.kernels.addmm
 import ntops.kernels.bmm
 import ntops.kernels.cos
 import ntops.kernels.div
+import ntops.kernels.eq
 import ntops.kernels.exp
+import ntops.kernels.ge
 import ntops.kernels.gelu
+import ntops.kernels.gt
+import ntops.kernels.isinf
+import ntops.kernels.isnan
+import ntops.kernels.le
+import ntops.kernels.lt
 import ntops.kernels.mm
 import ntops.kernels.mul
+import ntops.kernels.ne
 import ntops.kernels.neg
 import ntops.kernels.relu
 import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
 import ntops.kernels.sin
+import ntops.kernels.tanh
 
 
 def abs(input, *, out=None):
@@ -100,10 +109,63 @@ def exp(input, *, out=None):
     return out
 
 
+def ge(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.ge.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def eq(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.eq.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
 def gelu(input, approximate="none"):
     output = torch.empty_like(input)
 
     kernel = ntops.kernels.gelu.make(input.ndim, approximate)
+
+    kernel(input, output)
+
+    return output
+
+
+def gt(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.gt.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def isinf(input):
+    output = torch.empty_like(input)
+
+    kernel = ntops.kernels.isinf.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
+
+
+def isnan(input):
+    output = torch.empty_like(input)
+
+    kernel = ntops.kernels.isnan.make(input.ndim)
 
     kernel(input, output)
 
@@ -124,11 +186,44 @@ def mm(input, mat2, *, out=None):
     return out
 
 
+def le(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.le.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def lt(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.lt.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
 def mul(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
     kernel = ntops.kernels.mul.make(input.ndim)
+
+    kernel(input, other, out)
+
+    return out
+
+
+def ne(input, other, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.ne.make(input.ndim)
 
     kernel(input, other, out)
 
@@ -186,6 +281,17 @@ def sin(input, *, out=None):
         out = torch.empty_like(input)
 
     kernel = ntops.kernels.sin.make(input.ndim)
+
+    kernel(input, out)
+
+    return out
+
+
+def tanh(input, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.tanh.make(input.ndim)
 
     kernel(input, out)
 
