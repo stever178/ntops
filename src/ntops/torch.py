@@ -1,3 +1,5 @@
+import random
+
 import torch
 
 import ntops.kernels.abs
@@ -10,6 +12,7 @@ import ntops.kernels.bmm
 import ntops.kernels.clamp
 import ntops.kernels.cos
 import ntops.kernels.div
+import ntops.kernels.dropout
 import ntops.kernels.eq
 import ntops.kernels.exp
 import ntops.kernels.ge
@@ -145,6 +148,27 @@ def div(input, other, *, rounding_mode=None, out=None):
     kernel(input, other, out)
 
     return out
+
+
+def dropout(input, p=0.5, training=True, inplace=False):
+    if not training or p == 0:
+        if inplace:
+            return input
+        else:
+            return input.clone()
+
+    seed = random.randrange(0, 2**31)
+
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.dropout.make(input.ndim)
+
+    kernel(input, p, seed, output)
+
+    return output
 
 
 def exp(input, *, out=None):
