@@ -32,6 +32,7 @@ import ntops.kernels.rsqrt
 import ntops.kernels.sigmoid
 import ntops.kernels.sin
 import ntops.kernels.softmax
+import ntops.kernels.sub
 import ntops.kernels.tanh
 
 
@@ -382,6 +383,17 @@ def softmax(input, dim, dtype=None):
     kernel(input, output)
 
     return output
+
+
+def sub(input, other, *, alpha=1, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sub.make(input.ndim)
+
+    kernel(input, other, alpha, out)
+
+    return out
 
 
 def tanh(input, *, out=None):
