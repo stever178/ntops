@@ -379,12 +379,17 @@ def scaled_dot_product_attention(
 
     mask_shape = query.shape[:-1] + (key.shape[-2],)
 
-    if attn_mask is None:
-        attn_mask = torch.zeros(mask_shape, dtype=query.dtype, device=query.device)
-    elif attn_mask.dtype == torch.bool:
-        attn_mask = torch.where(attn_mask, 0, float("-inf"))
+    if attn_mask is not None:
+        with_attn_mask = True
 
-    attn_mask = attn_mask.expand(mask_shape)
+        if attn_mask.dtype == torch.bool:
+            attn_mask = torch.where(attn_mask, 0, float("-inf"))
+
+        attn_mask = attn_mask.expand(mask_shape)
+    else:
+        with_attn_mask = False
+
+        attn_mask = torch.empty(mask_shape, device="meta")
 
     if scale is None:
         scale = 1 / math.sqrt(query.shape[-1])
@@ -410,9 +415,10 @@ def scaled_dot_product_attention(
             attn_mask,
             scale,
             output,
+            with_attn_mask,
         )
     else:
-        kernel(query, key, value, attn_mask, scale, output)
+        kernel(query, key, value, attn_mask, scale, output, with_attn_mask)
 
     return output
 
