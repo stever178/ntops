@@ -362,10 +362,7 @@ def scaled_dot_product_attention(
     dropout_p=0,
     is_causal=False,
     scale=None,
-    # The default value here differs from that of
-    # `torch.nn.functional.scaled_dot_product_attention`
-    # because GQA cannot be disabled at the moment.
-    enable_gqa=True,
+    enable_gqa=False,
     present_key=None,
     present_value=None,
     present_key_slot=None,
@@ -373,11 +370,26 @@ def scaled_dot_product_attention(
 ):
     # TODO: Support `dropout_p`.
     assert dropout_p == 0, "`dropout_p` is not supported yet."
-    assert enable_gqa, "GQA must be enabled for now."
 
     assert attn_mask is None or not is_causal, (
         "Cannot use `attn_mask` and `is_causal` together."
     )
+
+    num_heads_q = query.shape[-3]
+    num_heads_kv = key.shape[-3]
+
+    assert num_heads_kv == value.shape[-3], (
+        "Number of heads in `key` and `value` must be the same."
+    )
+
+    if not enable_gqa:
+        assert num_heads_q == num_heads_kv, (
+            "Number of heads in `query`, `key`, and `value` must be the same when GQA is not enabled."
+        )
+    else:
+        assert num_heads_q % num_heads_kv == 0, (
+            "Number of heads in `query` must be divisible by number of heads in `key` and `value` when GQA is enabled."
+        )
 
     mask_shape = query.shape[:-1] + (key.shape[-2],)
 
