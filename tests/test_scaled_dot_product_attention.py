@@ -17,13 +17,17 @@ def generate_arguments():
     arguments = []
 
     attn_mask_types = (None, torch.bool, torch.float32)
+    is_causal_values = (False, True)
     scales = (None, random.uniform(0.05, 0.5))
     dtypes = (torch.float32, torch.float16)
     with_kv_cache_values = (False, True)
 
-    for attn_mask_type, scale, dtype, with_kv_cache in itertools.product(
-        attn_mask_types, scales, dtypes, with_kv_cache_values
+    for attn_mask_type, is_causal, scale, dtype, with_kv_cache in itertools.product(
+        attn_mask_types, is_causal_values, scales, dtypes, with_kv_cache_values
     ):
+        if attn_mask_type is not None and is_causal:
+            continue
+
         batch_size = random.randint(1, 4)
         num_heads_q = 2 ** random.randint(1, 5)
         seq_len_q = _generate_random_size()
@@ -49,6 +53,7 @@ def generate_arguments():
                 num_heads_kv,
                 seq_len_kv,
                 attn_mask_type,
+                is_causal,
                 scale,
                 enable_gqa,
                 with_kv_cache,
@@ -59,7 +64,7 @@ def generate_arguments():
         )
 
     return (
-        "batch_size, num_heads_q, seq_len_q, head_dim, num_heads_kv, seq_len_kv, attn_mask_type, scale, enable_gqa, with_kv_cache, dtype, atol, rtol",
+        "batch_size, num_heads_q, seq_len_q, head_dim, num_heads_kv, seq_len_kv, attn_mask_type, is_causal, scale, enable_gqa, with_kv_cache, dtype, atol, rtol",
         arguments,
     )
 
@@ -74,6 +79,7 @@ def test_cuda(
     num_heads_kv,
     seq_len_kv,
     attn_mask_type,
+    is_causal,
     scale,
     enable_gqa,
     with_kv_cache,
@@ -129,6 +135,7 @@ def test_cuda(
         key,
         value,
         attn_mask=attn_mask,
+        is_causal=is_causal,
         scale=scale,
         enable_gqa=enable_gqa,
         present_key=present_key,
@@ -141,6 +148,7 @@ def test_cuda(
         key_cloned,
         value_cloned,
         attn_mask=attn_mask,
+        is_causal=is_causal,
         scale=scale,
         enable_gqa=enable_gqa,
     )

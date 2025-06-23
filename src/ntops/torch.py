@@ -373,9 +373,11 @@ def scaled_dot_product_attention(
 ):
     # TODO: Support `dropout_p`.
     assert dropout_p == 0, "`dropout_p` is not supported yet."
-    # TODO: Support `is_causal`.
-    assert not is_causal, "`is_causal` is not supported yet."
     assert enable_gqa, "GQA must be enabled for now."
+
+    assert attn_mask is None or not is_causal, (
+        "Cannot use `attn_mask` and `is_causal` together."
+    )
 
     mask_shape = query.shape[:-1] + (key.shape[-2],)
 
@@ -413,12 +415,13 @@ def scaled_dot_product_attention(
             present_key_slot,
             present_value_slot,
             attn_mask,
+            is_causal,
             scale,
             output,
             with_attn_mask,
         )
     else:
-        kernel(query, key, value, attn_mask, scale, output, with_attn_mask)
+        kernel(query, key, value, attn_mask, is_causal, scale, output, with_attn_mask)
 
     return output
 

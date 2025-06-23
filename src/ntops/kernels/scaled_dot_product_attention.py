@@ -17,6 +17,7 @@ def arrangement(
     present_key_slot,
     present_value_slot,
     attn_mask,
+    is_causal,
     scale,
     output,
     with_attn_mask,
@@ -67,6 +68,7 @@ def arrangement(
         present_value_slot
     )
     attn_mask_arranged = arrange_attn_mask(attn_mask)
+    is_causal_arranged = is_causal
     scale_arranged = scale
     output_arranged = arrange_query_or_output(output)
     with_attn_mask_arranged = with_attn_mask
@@ -81,6 +83,7 @@ def arrangement(
             present_key_slot_arranged,
             present_value_slot_arranged,
             attn_mask_arranged,
+            is_causal_arranged,
             scale_arranged,
             output_arranged,
             with_attn_mask_arranged,
@@ -91,6 +94,7 @@ def arrangement(
         key_arranged,
         value_arranged,
         attn_mask_arranged,
+        is_causal_arranged,
         scale_arranged,
         output_arranged,
         with_attn_mask_arranged,
@@ -106,6 +110,7 @@ def application_with_kv_cache(
     present_key_slot,
     present_value_slot,
     attn_mask,
+    is_causal,
     scale,
     output,
     with_attn_mask,
@@ -114,12 +119,12 @@ def application_with_kv_cache(
     present_value_slot = present_value  # noqa: F841
 
     application_without_kv_cache(
-        query, key, value, attn_mask, scale, output, with_attn_mask
+        query, key, value, attn_mask, is_causal, scale, output, with_attn_mask
     )
 
 
 def application_without_kv_cache(
-    query, key, value, attn_mask, scale, output, with_attn_mask
+    query, key, value, attn_mask, is_causal, scale, output, with_attn_mask
 ):
     for i in range(query.shape[0]):
         query_i = (1.4426950408889634 * scale * query[i]).to(query[i].dtype)
@@ -134,6 +139,10 @@ def application_without_kv_cache(
 
             if with_attn_mask:
                 qk += attn_mask[j]
+
+            if is_causal:
+                mask = query[i].offsets(-2)[:, None] >= key[j].offsets(-2)[None, :]
+                qk = ntl.where(mask, qk, float("-inf"))
 
             next_max = ntl.maximum(max, ntl.max(qk, 1))
             stable_qk = ntl.exp2(qk - next_max[:, None])
@@ -168,7 +177,7 @@ def make(with_kv_cache):
         for _ in range(4)
     )
     scale = Tensor(0)
-    with_attn_mask = Tensor(0, constexpr=True)
+    is_causal, with_attn_mask = (Tensor(0, constexpr=True) for _ in range(2))
 
     if with_kv_cache:
         application = application_with_kv_cache
@@ -184,6 +193,7 @@ def make(with_kv_cache):
         present_key_slot,
         present_value_slot,
         attn_mask,
+        is_causal,
         scale,
         output,
         with_attn_mask,
