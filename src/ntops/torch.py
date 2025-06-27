@@ -1,3 +1,6 @@
+import math
+import random
+
 import torch
 
 import ntops.kernels.abs
@@ -10,6 +13,7 @@ import ntops.kernels.bmm
 import ntops.kernels.clamp
 import ntops.kernels.cos
 import ntops.kernels.div
+import ntops.kernels.dropout
 import ntops.kernels.eq
 import ntops.kernels.exp
 import ntops.kernels.ge
@@ -23,11 +27,15 @@ import ntops.kernels.mm
 import ntops.kernels.mul
 import ntops.kernels.ne
 import ntops.kernels.neg
+import ntops.kernels.pow
 import ntops.kernels.relu
 import ntops.kernels.rsqrt
+import ntops.kernels.scaled_dot_product_attention
 import ntops.kernels.sigmoid
+import ntops.kernels.silu
 import ntops.kernels.sin
 import ntops.kernels.softmax
+import ntops.kernels.sub
 import ntops.kernels.tanh
 
 
@@ -145,6 +153,27 @@ def div(input, other, *, rounding_mode=None, out=None):
     kernel(input, other, out)
 
     return out
+
+
+def dropout(input, p=0.5, training=True, inplace=False):
+    if not training or p == 0:
+        if inplace:
+            return input
+        else:
+            return input.clone()
+
+    seed = random.randrange(0, 2**31)
+
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.dropout.make(input.ndim)
+
+    kernel(input, p, seed, output)
+
+    return output
 
 
 def exp(input, *, out=None):
@@ -290,6 +319,17 @@ def neg(input, *, out=None):
     return out
 
 
+def pow(input, exponent, *, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.pow.make(input.ndim)
+
+    kernel(input, exponent, out)
+
+    return out
+
+
 def relu(input, inplace=False):
     if inplace:
         output = input
@@ -314,6 +354,90 @@ def rsqrt(input, *, out=None):
     return out
 
 
+def scaled_dot_product_attention(
+    query,
+    key,
+    value,
+    attn_mask=None,
+    dropout_p=0,
+    is_causal=False,
+    scale=None,
+    enable_gqa=False,
+    present_key=None,
+    present_value=None,
+    present_key_slot=None,
+    present_value_slot=None,
+):
+    # TODO: Support `dropout_p`.
+    assert dropout_p == 0, "`dropout_p` is not supported yet."
+
+    assert attn_mask is None or not is_causal, (
+        "Cannot use `attn_mask` and `is_causal` together."
+    )
+
+    num_heads_q = query.shape[-3]
+    num_heads_kv = key.shape[-3]
+
+    assert num_heads_kv == value.shape[-3], (
+        "Number of heads in `key` and `value` must be the same."
+    )
+
+    if not enable_gqa:
+        assert num_heads_q == num_heads_kv, (
+            "Number of heads in `query`, `key`, and `value` must be the same when GQA is not enabled."
+        )
+    else:
+        assert num_heads_q % num_heads_kv == 0, (
+            "Number of heads in `query` must be divisible by number of heads in `key` and `value` when GQA is enabled."
+        )
+
+    mask_shape = query.shape[:-1] + (key.shape[-2],)
+
+    if attn_mask is not None:
+        with_attn_mask = True
+
+        if attn_mask.dtype == torch.bool:
+            attn_mask = torch.where(attn_mask, 0, float("-inf"))
+
+        attn_mask = attn_mask.expand(mask_shape)
+    else:
+        with_attn_mask = False
+
+        attn_mask = torch.empty(mask_shape, device="meta")
+
+    if scale is None:
+        scale = 1 / math.sqrt(query.shape[-1])
+
+    if present_key is not None:
+        with_kv_cache = True
+    else:
+        with_kv_cache = False
+
+    output = torch.empty_like(query, dtype=value.dtype)
+
+    kernel = ntops.kernels.scaled_dot_product_attention.make(with_kv_cache)
+
+    if with_kv_cache:
+        kernel(
+            query,
+            key,
+            value,
+            present_key,
+            present_value,
+            present_key_slot,
+            present_value_slot,
+            attn_mask,
+            is_causal,
+            scale,
+            output,
+            with_attn_mask,
+        )
+    else:
+        kernel(query, key, value, attn_mask, is_causal, scale, output, with_attn_mask)
+
+    return output
+
+
 def sigmoid(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -323,6 +447,19 @@ def sigmoid(input, *, out=None):
     kernel(input, out)
 
     return out
+
+
+def silu(input, inplace=False):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    kernel = ntops.kernels.silu.make(input.ndim)
+
+    kernel(input, output)
+
+    return output
 
 
 def sin(input, *, out=None):
@@ -346,6 +483,17 @@ def softmax(input, dim, dtype=None):
     kernel(input, output)
 
     return output
+
+
+def sub(input, other, *, alpha=1, out=None):
+    if out is None:
+        out = torch.empty_like(input)
+
+    kernel = ntops.kernels.sub.make(input.ndim)
+
+    kernel(input, other, alpha, out)
+
+    return out
 
 
 def tanh(input, *, out=None):
