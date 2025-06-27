@@ -46,7 +46,7 @@ def arrangement(
         return arranged
 
     def arrange_present_key_or_present_value(input):
-        arranged = input.tile((1, 1, -1, -1))
+        arranged = input.tile((1, 1, BLOCK_SIZE_M, BLOCK_SIZE_N))
         arranged.dtype = arranged.dtype.squeeze((0, 1))
 
         return arranged
@@ -165,16 +165,7 @@ def make(with_kv_cache):
         for _ in range(5)
     )
     present_key, present_value, present_key_slot, present_value_slot = (
-        Tensor(
-            4,
-            shape_options=(
-                None,
-                None,
-                {"constexpr": True, "upper_bound": 1},
-                {"constexpr": True, "upper_bound": 128},
-            ),
-        )
-        for _ in range(4)
+        Tensor(4) for _ in range(4)
     )
     scale = Tensor(0)
     is_causal, with_attn_mask = (Tensor(0, constexpr=True) for _ in range(2))
