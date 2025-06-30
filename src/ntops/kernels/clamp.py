@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
@@ -11,8 +10,14 @@ def application(input, min_val, max_val, output):
     output = ntl.clamp(input, min_val, max_val)  # noqa: F841
 
 
-@functools.cache
-def make(ndim):
-    tensors = (Tensor(ndim), Tensor(ndim), Tensor(ndim), Tensor(ndim))
+def premake(ndim, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, block_size=block_size)
 
-    return ninetoothed.make(arrangement, application, tensors)
+    tensors = (
+        Tensor(ndim, dtype=dtype),
+        Tensor(ndim, dtype=dtype),
+        Tensor(ndim, dtype=dtype),
+        Tensor(ndim, dtype=dtype),
+    )
+
+    return arrangement_, application, tensors

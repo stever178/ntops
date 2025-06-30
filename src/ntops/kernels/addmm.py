@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
@@ -47,8 +46,21 @@ def application(input, x, y, beta, alpha, output):
     output = beta * input + alpha * mm_output
 
 
-@functools.cache
-def make():
-    tensors = (Tensor(2), Tensor(2), Tensor(2), Tensor(0), Tensor(0), Tensor(2))
+def premake(dtype=None, block_size_m=None, block_size_n=None, block_size_k=None):
+    arrangement_ = functools.partial(
+        arrangement,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+        block_size_k=block_size_k,
+    )
 
-    return ninetoothed.make(arrangement, application, tensors)
+    tensors = (
+        Tensor(2, dtype=dtype),
+        Tensor(2, dtype=dtype),
+        Tensor(2, dtype=dtype),
+        Tensor(0, dtype=dtype),
+        Tensor(0, dtype=dtype),
+        Tensor(2, dtype=dtype),
+    )
+
+    return arrangement_, application, tensors

@@ -45,6 +45,14 @@ def application(input, other, output):
     output = accumulator
 
 
-@functools.cache
-def make():
-    return ninetoothed.make(arrangement, application, (Tensor(2), Tensor(2), Tensor(2)))
+def premake(dtype=None, block_size_m=None, block_size_n=None, block_size_k=None):
+    arrangement_ = functools.partial(
+        arrangement,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+        block_size_k=block_size_k,
+    )
+
+    tensors = (Tensor(2, dtype=dtype), Tensor(2, dtype=dtype), Tensor(2, dtype=dtype))
+
+    return arrangement_, application, tensors

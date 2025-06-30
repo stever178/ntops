@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 from ninetoothed import Tensor
 
 from ntops.kernels.mm import BLOCK_SIZE_K, BLOCK_SIZE_M, BLOCK_SIZE_N, application
@@ -36,6 +35,14 @@ def arrangement(
     return input_arranged, other_arranged, output_arranged
 
 
-@functools.cache
-def make():
-    return ninetoothed.make(arrangement, application, (Tensor(3), Tensor(3), Tensor(3)))
+def premake(dtype=None, block_size_m=None, block_size_n=None, block_size_k=None):
+    arrangement_ = functools.partial(
+        arrangement,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+        block_size_k=block_size_k,
+    )
+
+    tensors = (Tensor(3, dtype=dtype), Tensor(3, dtype=dtype), Tensor(3, dtype=dtype))
+
+    return arrangement_, application, tensors

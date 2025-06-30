@@ -60,13 +60,14 @@ def application(input, output):
         output[i] = numerator / denominator
 
 
-@functools.cache
-def make(ndim, dim):
-    return ninetoothed.make(
-        functools.partial(arrangement, dim=dim),
-        application,
-        (
-            Tensor(ndim, other=float("-inf"), shape_options={"constexpr": True}),
-            Tensor(ndim),
+def premake(ndim, dim, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, dim=dim, block_size=block_size)
+
+    tensors = (
+        Tensor(
+            ndim, dtype=dtype, other=float("-inf"), shape_options={"constexpr": True}
         ),
+        Tensor(ndim, dtype=dtype),
     )
+
+    return arrangement_, application, tensors

@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
@@ -15,10 +14,11 @@ def logical_application(input, output):
     output = ntl.where(input, False, True)  # noqa: F841
 
 
-@functools.cache
-def make(ndim, logical=False):
-    tensors = (Tensor(ndim), Tensor(ndim))
+def premake(ndim, logical=False, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, block_size=block_size)
 
     application = logical_application if logical else bitwise_application
 
-    return ninetoothed.make(arrangement, application, tensors)
+    tensors = (Tensor(ndim, dtype=dtype), Tensor(ndim, dtype=dtype))
+
+    return arrangement_, application, tensors

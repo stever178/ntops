@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 from ninetoothed import Tensor
 
 from ntops.kernels.element_wise import arrangement
@@ -10,6 +9,9 @@ def application(input, output):
     output = input != input  # noqa: F841
 
 
-@functools.cache
-def make(ndim):
-    return ninetoothed.make(arrangement, application, (Tensor(ndim), Tensor(ndim)))
+def premake(ndim, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, block_size=block_size)
+
+    tensors = (Tensor(ndim, dtype=dtype), Tensor(ndim, dtype=dtype))
+
+    return arrangement_, application, tensors

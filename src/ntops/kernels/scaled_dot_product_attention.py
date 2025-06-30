@@ -162,19 +162,40 @@ def application_without_kv_cache(
         output[i] = acc  # noqa: F841
 
 
-@functools.cache
-def make(with_kv_cache):
+def premake(
+    with_kv_cache,
+    emb_dim=None,
+    is_causal=None,
+    with_attn_mask=None,
+    dtype=None,
+    block_size_m=None,
+    block_size_n=None,
+):
+    arrangement_ = functools.partial(
+        arrangement,
+        with_kv_cache=with_kv_cache,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+    )
+
     query, key, value, attn_mask, output = (
         Tensor(
-            4, shape_options=(None, None, None, {"constexpr": True, "upper_bound": 128})
+            4,
+            dtype=dtype,
+            shape_options=(None, None, None, {"constexpr": True, "upper_bound": 128}),
         )
         for _ in range(5)
     )
     present_key, present_value, present_key_slot, present_value_slot = (
-        Tensor(4) for _ in range(4)
+        Tensor(4, dtype=dtype) for _ in range(4)
     )
-    scale = Tensor(0)
-    is_causal, with_attn_mask = (Tensor(0, constexpr=True) for _ in range(2))
+    scale = Tensor(0, dtype=dtype)
+    is_causal = Tensor(0, dtype=dtype, constexpr=True, value=is_causal)
+    with_attn_mask = Tensor(0, dtype=dtype, constexpr=True, value=with_attn_mask)
+
+    if emb_dim is not None:
+        for tensor in (query, key, value, attn_mask, output):
+            tensor.shape = tensor.shape[:-1] + (emb_dim,)
 
     if with_kv_cache:
         application = application_with_kv_cache
@@ -196,8 +217,4 @@ def make(with_kv_cache):
         with_attn_mask,
     )
 
-    return ninetoothed.make(
-        functools.partial(arrangement, with_kv_cache=with_kv_cache),
-        application,
-        tensors,
-    )
+    return arrangement_, application, tensors
