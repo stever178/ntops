@@ -22,8 +22,8 @@ def arrangement(
     output,
     with_attn_mask,
     with_kv_cache,
-    block_size_m=BLOCK_SIZE_M,
-    block_size_n=BLOCK_SIZE_N,
+    block_size_m=None,
+    block_size_n=None,
 ):
     def arrange_query_or_output(input):
         arranged = input.tile((1, 1, block_size_m, -1)).tile(
@@ -57,6 +57,12 @@ def arrangement(
         arranged.dtype.dtype = arranged.dtype.dtype.squeeze((0, 1))
 
         return arranged
+
+    if block_size_m is None:
+        block_size_m = BLOCK_SIZE_M
+
+    if block_size_n is None:
+        block_size_n = BLOCK_SIZE_N
 
     query_arranged = arrange_query_or_output(query)
     key_arranged = arrange_key_or_value(key)

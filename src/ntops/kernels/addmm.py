@@ -14,10 +14,19 @@ def arrangement(
     beta,
     alpha,
     output,
-    block_size_m=mm.BLOCK_SIZE_M,
-    block_size_n=mm.BLOCK_SIZE_N,
-    block_size_k=mm.BLOCK_SIZE_K,
+    block_size_m=None,
+    block_size_n=None,
+    block_size_k=None,
 ):
+    if block_size_m is None:
+        block_size_m = mm.BLOCK_SIZE_M
+
+    if block_size_n is None:
+        block_size_n = mm.BLOCK_SIZE_N
+
+    if block_size_k is None:
+        block_size_k = mm.BLOCK_SIZE_K
+
     _, _, input_arranged = mm.arrangement(
         x,
         y,

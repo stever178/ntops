@@ -7,13 +7,17 @@ from ntops.kernels.mm import BLOCK_SIZE_K, BLOCK_SIZE_M, BLOCK_SIZE_N, applicati
 
 
 def arrangement(
-    input,
-    other,
-    output,
-    block_size_m=BLOCK_SIZE_M,
-    block_size_n=BLOCK_SIZE_N,
-    block_size_k=BLOCK_SIZE_K,
+    input, other, output, block_size_m=None, block_size_n=None, block_size_k=None
 ):
+    if block_size_m is None:
+        block_size_m = BLOCK_SIZE_M
+
+    if block_size_n is None:
+        block_size_n = BLOCK_SIZE_N
+
+    if block_size_k is None:
+        block_size_k = BLOCK_SIZE_K
+
     output_arranged = output.tile((1, block_size_m, block_size_n))
     output_arranged.dtype = output_arranged.dtype.squeeze(0)
 
