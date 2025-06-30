@@ -7,7 +7,7 @@ from ninetoothed import Tensor
 BLOCK_SIZE = ninetoothed.block_size()
 
 
-def arrangement(input, output, dim):
+def arrangement(input, output, dim, block_size=BLOCK_SIZE):
     assert input.ndim == output.ndim
 
     def create_axis_tile_shape(dim, dim_block):
@@ -28,7 +28,7 @@ def arrangement(input, output, dim):
         )
         return input_arranged
 
-    inner_block_shape = create_axis_tile_shape(dim, BLOCK_SIZE)
+    inner_block_shape = create_axis_tile_shape(dim, block_size)
     outer_block_shape = create_axis_tile_shape(dim, -1)
 
     return arrange(input), arrange(output)

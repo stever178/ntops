@@ -7,8 +7,25 @@ from ninetoothed import Tensor
 import ntops.kernels.mm as mm
 
 
-def arrangement(input, x, y, beta, alpha, output):
-    _, _, input_arranged = mm.arrangement(x, y, input)
+def arrangement(
+    input,
+    x,
+    y,
+    beta,
+    alpha,
+    output,
+    block_size_m=mm.BLOCK_SIZE_M,
+    block_size_n=mm.BLOCK_SIZE_N,
+    block_size_k=mm.BLOCK_SIZE_K,
+):
+    _, _, input_arranged = mm.arrangement(
+        x,
+        y,
+        input,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+        block_size_k=block_size_k,
+    )
 
     x_arranged, y_arranged, output_arranged = mm.arrangement(x, y, output)
 
