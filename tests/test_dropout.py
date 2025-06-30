@@ -30,8 +30,6 @@ def test_cuda(shape, dtype, atol, rtol):
         reference_output.nonzero().numel() / reference_output.ndim / input.numel()
     )
 
-    print(abs(ninetoothed_non_zero_ratio - reference_non_zero_ratio))
-
     assert abs(ninetoothed_non_zero_ratio - reference_non_zero_ratio) < 0.1
 
     assert torch.allclose(
