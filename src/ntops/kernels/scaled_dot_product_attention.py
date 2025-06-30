@@ -22,11 +22,11 @@ def arrangement(
     output,
     with_attn_mask,
     with_kv_cache,
-    BLOCK_SIZE_M=BLOCK_SIZE_M,
-    BLOCK_SIZE_N=BLOCK_SIZE_N,
+    block_size_m=BLOCK_SIZE_M,
+    block_size_n=BLOCK_SIZE_N,
 ):
     def arrange_query_or_output(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, -1)).tile(
+        arranged = input.tile((1, 1, block_size_m, -1)).tile(
             (1, query.shape[-3] // key.shape[-3], 1, 1)
         )
         arranged.dtype = arranged.dtype.squeeze((0, 2, 3))
@@ -36,7 +36,7 @@ def arrangement(
 
     def arrange_key_or_value(input):
         arranged = (
-            input.tile((1, 1, BLOCK_SIZE_N, -1))
+            input.tile((1, 1, block_size_n, -1))
             .tile((1, 1, -1, -1))
             .expand((-1, -1, query_arranged.shape[-2], -1))
         )
@@ -46,13 +46,13 @@ def arrangement(
         return arranged
 
     def arrange_present_key_or_present_value(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, BLOCK_SIZE_N))
+        arranged = input.tile((1, 1, block_size_m, block_size_n))
         arranged.dtype = arranged.dtype.squeeze((0, 1))
 
         return arranged
 
     def arrange_attn_mask(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, BLOCK_SIZE_N)).tile((1, 1, 1, -1))
+        arranged = input.tile((1, 1, block_size_m, block_size_n)).tile((1, 1, 1, -1))
         arranged.dtype = arranged.dtype.squeeze((0, 1, 2))
         arranged.dtype.dtype = arranged.dtype.dtype.squeeze((0, 1))
 
