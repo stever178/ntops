@@ -22,11 +22,11 @@ def arrangement(
     output,
     with_attn_mask,
     with_kv_cache,
-    BLOCK_SIZE_M=BLOCK_SIZE_M,
-    BLOCK_SIZE_N=BLOCK_SIZE_N,
+    block_size_m=None,
+    block_size_n=None,
 ):
     def arrange_query_or_output(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, -1)).tile(
+        arranged = input.tile((1, 1, block_size_m, -1)).tile(
             (1, query.shape[-3] // key.shape[-3], 1, 1)
         )
         arranged.dtype = arranged.dtype.squeeze((0, 2, 3))
@@ -36,7 +36,7 @@ def arrangement(
 
     def arrange_key_or_value(input):
         arranged = (
-            input.tile((1, 1, BLOCK_SIZE_N, -1))
+            input.tile((1, 1, block_size_n, -1))
             .tile((1, 1, -1, -1))
             .expand((-1, -1, query_arranged.shape[-2], -1))
         )
@@ -46,17 +46,23 @@ def arrangement(
         return arranged
 
     def arrange_present_key_or_present_value(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, BLOCK_SIZE_N))
+        arranged = input.tile((1, 1, block_size_m, block_size_n))
         arranged.dtype = arranged.dtype.squeeze((0, 1))
 
         return arranged
 
     def arrange_attn_mask(input):
-        arranged = input.tile((1, 1, BLOCK_SIZE_M, BLOCK_SIZE_N)).tile((1, 1, 1, -1))
+        arranged = input.tile((1, 1, block_size_m, block_size_n)).tile((1, 1, 1, -1))
         arranged.dtype = arranged.dtype.squeeze((0, 1, 2))
         arranged.dtype.dtype = arranged.dtype.dtype.squeeze((0, 1))
 
         return arranged
+
+    if block_size_m is None:
+        block_size_m = BLOCK_SIZE_M
+
+    if block_size_n is None:
+        block_size_n = BLOCK_SIZE_N
 
     query_arranged = arrange_query_or_output(query)
     key_arranged = arrange_key_or_value(key)
@@ -156,19 +162,40 @@ def application_without_kv_cache(
         output[i] = acc  # noqa: F841
 
 
-@functools.cache
-def make(with_kv_cache):
+def premake(
+    with_kv_cache,
+    emb_dim=None,
+    is_causal=None,
+    with_attn_mask=None,
+    dtype=None,
+    block_size_m=None,
+    block_size_n=None,
+):
+    arrangement_ = functools.partial(
+        arrangement,
+        with_kv_cache=with_kv_cache,
+        block_size_m=block_size_m,
+        block_size_n=block_size_n,
+    )
+
     query, key, value, attn_mask, output = (
         Tensor(
-            4, shape_options=(None, None, None, {"constexpr": True, "upper_bound": 128})
+            4,
+            dtype=dtype,
+            shape_options=(None, None, None, {"constexpr": True, "upper_bound": 128}),
         )
         for _ in range(5)
     )
     present_key, present_value, present_key_slot, present_value_slot = (
-        Tensor(4) for _ in range(4)
+        Tensor(4, dtype=dtype) for _ in range(4)
     )
-    scale = Tensor(0)
-    is_causal, with_attn_mask = (Tensor(0, constexpr=True) for _ in range(2))
+    scale = Tensor(0, dtype=dtype)
+    is_causal = Tensor(0, dtype=dtype, constexpr=True, value=is_causal)
+    with_attn_mask = Tensor(0, dtype=dtype, constexpr=True, value=with_attn_mask)
+
+    if emb_dim is not None:
+        for tensor in (query, key, value, attn_mask, output):
+            tensor.shape = tensor.shape[:-1] + (emb_dim,)
 
     if with_kv_cache:
         application = application_with_kv_cache
@@ -190,8 +217,4 @@ def make(with_kv_cache):
         with_attn_mask,
     )
 
-    return ninetoothed.make(
-        functools.partial(arrangement, with_kv_cache=with_kv_cache),
-        application,
-        tensors,
-    )
+    return arrangement_, application, tensors
