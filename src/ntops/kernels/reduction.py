@@ -9,6 +9,9 @@ def arrangement(*tensors, dim, block_size=None):
 
     assert all(tensor.ndim == ndim or tensor.ndim == 0 for tensor in tensors)
 
+    if dim < 0:
+        dim += ndim
+
     inner_block_shape = tuple(1 if i != dim else block_size for i in range(ndim))
     outer_block_shape = tuple(1 if i != dim else -1 for i in range(ndim))
 
