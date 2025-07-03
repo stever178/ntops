@@ -1,40 +1,9 @@
 import functools
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
-BLOCK_SIZE = ninetoothed.block_size()
-
-
-def arrangement(input, output, dim, block_size=None):
-    assert input.ndim == output.ndim
-
-    def create_axis_tile_shape(dim, dim_block):
-        return (
-            tuple(1 for _ in range(dim))
-            + (dim_block,)
-            + tuple(1 for _ in range(input.ndim - dim - 1))
-        )
-
-    def arrange(input):
-        input_arranged = input.tile(inner_block_shape).tile(outer_block_shape)
-
-        input_arranged.dtype = input_arranged.dtype.squeeze(
-            tuple(d for d in range(input.ndim) if d != dim)
-        )
-        input_arranged.dtype.dtype = input_arranged.dtype.dtype.squeeze(
-            tuple(d for d in range(input.ndim) if d != dim)
-        )
-        return input_arranged
-
-    if block_size is None:
-        block_size = BLOCK_SIZE
-
-    inner_block_shape = create_axis_tile_shape(dim, block_size)
-    outer_block_shape = create_axis_tile_shape(dim, -1)
-
-    return arrange(input), arrange(output)
+from ntops.kernels.reduction import arrangement
 
 
 def _exp(x, dtype):
