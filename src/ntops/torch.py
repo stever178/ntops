@@ -31,6 +31,7 @@ import ntops.kernels.ne
 import ntops.kernels.neg
 import ntops.kernels.pow
 import ntops.kernels.relu
+import ntops.kernels.rms_norm
 import ntops.kernels.rsqrt
 import ntops.kernels.scaled_dot_product_attention
 import ntops.kernels.sigmoid
@@ -343,6 +344,29 @@ def relu(input, inplace=False):
     kernel = _cached_make(ntops.kernels.relu.premake, input.ndim)
 
     kernel(input, output)
+
+    return output
+
+
+def rms_norm(input, normalized_shape, weight=None, eps=None):
+    if isinstance(normalized_shape, int):
+        normalized_shape = (normalized_shape,)
+
+    normalized_shape = tuple(normalized_shape)
+
+    if weight is None:
+        weight = torch.ones_like(input)
+    else:
+        weight = weight.expand_as(input)
+
+    if eps is None:
+        eps = torch.finfo(input.dtype).eps
+
+    output = torch.empty_like(input)
+
+    kernel = _cached_make(ntops.kernels.rms_norm.premake, input.ndim, normalized_shape)
+
+    kernel(input, weight, eps, output, math.prod(normalized_shape))
 
     return output
 
