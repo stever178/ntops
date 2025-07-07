@@ -32,6 +32,7 @@ import ntops.kernels.neg
 import ntops.kernels.pow
 import ntops.kernels.relu
 import ntops.kernels.rms_norm
+import ntops.kernels.rotary_position_embedding
 import ntops.kernels.rsqrt
 import ntops.kernels.scaled_dot_product_attention
 import ntops.kernels.sigmoid
@@ -367,6 +368,31 @@ def rms_norm(input, normalized_shape, weight=None, eps=None):
     kernel = _cached_make(ntops.kernels.rms_norm.premake, input.ndim, normalized_shape)
 
     kernel(input, weight, eps, output, math.prod(normalized_shape))
+
+    return output
+
+
+def rotary_position_embedding(
+    input, sin_table, cos_table, interleaved=True, inplace=False
+):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    batch_size, _, num_heads, _ = input.shape
+
+    sin_table = sin_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+    cos_table = cos_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+
+    kernel = _cached_make(
+        ntops.kernels.rotary_position_embedding.premake,
+        input.ndim,
+        interleaved=interleaved,
+        num_warps=1,
+    )
+
+    kernel(input, sin_table, cos_table, output)
 
     return output
 
