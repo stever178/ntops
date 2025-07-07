@@ -32,6 +32,7 @@ import ntops.kernels.neg
 import ntops.kernels.pow
 import ntops.kernels.relu
 import ntops.kernels.rms_norm
+import ntops.kernels.rotary_position_embedding
 import ntops.kernels.rsqrt
 import ntops.kernels.scaled_dot_product_attention
 import ntops.kernels.sigmoid
@@ -371,6 +372,31 @@ def rms_norm(input, normalized_shape, weight=None, eps=None):
     return output
 
 
+def rotary_position_embedding(
+    input, sin_table, cos_table, interleaved=True, inplace=False
+):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    batch_size, _, num_heads, _ = input.shape
+
+    sin_table = sin_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+    cos_table = cos_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+
+    kernel = _cached_make(
+        ntops.kernels.rotary_position_embedding.premake,
+        input.ndim,
+        interleaved=interleaved,
+        num_warps=1,
+    )
+
+    kernel(input, sin_table, cos_table, output)
+
+    return output
+
+
 def rsqrt(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
@@ -538,5 +564,12 @@ def tanh(input, *, out=None):
 
 
 @functools.cache
-def _cached_make(premake, *args, **keywords):
-    return ninetoothed.make(*premake(*args, **keywords))
+def _cached_make(
+    premake, *args, num_warps=None, num_stages=None, max_num_configs=None, **keywords
+):
+    return ninetoothed.make(
+        *premake(*args, **keywords),
+        num_warps=num_warps,
+        num_stages=num_stages,
+        max_num_configs=max_num_configs,
+    )
