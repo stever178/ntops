@@ -1,6 +1,8 @@
+import functools
 import math
 import random
 
+import ninetoothed
 import torch
 
 import ntops.kernels.abs
@@ -29,6 +31,8 @@ import ntops.kernels.ne
 import ntops.kernels.neg
 import ntops.kernels.pow
 import ntops.kernels.relu
+import ntops.kernels.rms_norm
+import ntops.kernels.rotary_position_embedding
 import ntops.kernels.rsqrt
 import ntops.kernels.scaled_dot_product_attention
 import ntops.kernels.sigmoid
@@ -43,7 +47,7 @@ def abs(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.abs.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.abs.premake, input.ndim)
 
     kernel(input, out)
 
@@ -54,7 +58,7 @@ def add(input, other, *, alpha=1, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.add.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.add.premake, input.ndim)
 
     kernel(input, other, alpha, out)
 
@@ -68,7 +72,7 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1, out=None):
     if out is None:
         out = torch.empty((m, n), dtype=input.dtype, device=input.device)
 
-    kernel = ntops.kernels.addmm.make()
+    kernel = _cached_make(ntops.kernels.addmm.premake)
 
     kernel(input, mat1, mat2, beta, alpha, out)
 
@@ -79,7 +83,7 @@ def bitwise_and(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.bitwise_and.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.bitwise_and.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -90,7 +94,9 @@ def bitwise_not(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.bitwise_not.make(input.ndim, input.dtype == torch.bool)
+    kernel = _cached_make(
+        ntops.kernels.bitwise_not.premake, input.ndim, input.dtype == torch.bool
+    )
 
     kernel(input, out)
 
@@ -101,7 +107,7 @@ def bitwise_or(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.bitwise_or.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.bitwise_or.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -115,7 +121,7 @@ def bmm(input, mat2, *, out=None):
     if out is None:
         out = torch.empty((b, m, n), dtype=input.dtype, device=input.device)
 
-    kernel = ntops.kernels.bmm.make()
+    kernel = _cached_make(ntops.kernels.bmm.premake)
 
     kernel(input, mat2, out)
 
@@ -126,7 +132,7 @@ def clamp(input, min=None, max=None, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.clamp.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.clamp.premake, input.ndim)
 
     kernel(input, min, max, out)
 
@@ -137,7 +143,7 @@ def cos(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.cos.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.cos.premake, input.ndim)
 
     kernel(input, out)
 
@@ -148,7 +154,7 @@ def div(input, other, *, rounding_mode=None, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.div.make(input.ndim, rounding_mode)
+    kernel = _cached_make(ntops.kernels.div.premake, input.ndim, rounding_mode)
 
     kernel(input, other, out)
 
@@ -169,7 +175,7 @@ def dropout(input, p=0.5, training=True, inplace=False):
     else:
         output = torch.empty_like(input)
 
-    kernel = ntops.kernels.dropout.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.dropout.premake, input.ndim)
 
     kernel(input, p, seed, output)
 
@@ -180,7 +186,7 @@ def exp(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.exp.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.exp.premake, input.ndim)
 
     kernel(input, out)
 
@@ -191,7 +197,7 @@ def ge(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.ge.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.ge.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -202,7 +208,7 @@ def eq(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.eq.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.eq.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -212,7 +218,7 @@ def eq(input, other, *, out=None):
 def gelu(input, approximate="none"):
     output = torch.empty_like(input)
 
-    kernel = ntops.kernels.gelu.make(input.ndim, approximate)
+    kernel = _cached_make(ntops.kernels.gelu.premake, input.ndim, approximate)
 
     kernel(input, output)
 
@@ -223,7 +229,7 @@ def gt(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.gt.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.gt.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -233,7 +239,7 @@ def gt(input, other, *, out=None):
 def isinf(input):
     output = torch.empty_like(input)
 
-    kernel = ntops.kernels.isinf.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.isinf.premake, input.ndim)
 
     kernel(input, output)
 
@@ -243,7 +249,7 @@ def isinf(input):
 def isnan(input):
     output = torch.empty_like(input)
 
-    kernel = ntops.kernels.isnan.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.isnan.premake, input.ndim)
 
     kernel(input, output)
 
@@ -257,7 +263,7 @@ def mm(input, mat2, *, out=None):
     if out is None:
         out = torch.empty((m, n), dtype=input.dtype, device=input.device)
 
-    kernel = ntops.kernels.mm.make()
+    kernel = _cached_make(ntops.kernels.mm.premake)
 
     kernel(input, mat2, out)
 
@@ -268,7 +274,7 @@ def le(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.le.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.le.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -279,7 +285,7 @@ def lt(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.lt.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.lt.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -290,7 +296,7 @@ def mul(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.mul.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.mul.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -301,7 +307,7 @@ def ne(input, other, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.ne.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.ne.premake, input.ndim)
 
     kernel(input, other, out)
 
@@ -312,7 +318,7 @@ def neg(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.neg.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.neg.premake, input.ndim)
 
     kernel(input, out)
 
@@ -323,7 +329,7 @@ def pow(input, exponent, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.pow.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.pow.premake, input.ndim)
 
     kernel(input, exponent, out)
 
@@ -336,9 +342,57 @@ def relu(input, inplace=False):
     else:
         output = torch.empty_like(input)
 
-    kernel = ntops.kernels.relu.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.relu.premake, input.ndim)
 
     kernel(input, output)
+
+    return output
+
+
+def rms_norm(input, normalized_shape, weight=None, eps=None):
+    if isinstance(normalized_shape, int):
+        normalized_shape = (normalized_shape,)
+
+    normalized_shape = tuple(normalized_shape)
+
+    if weight is None:
+        weight = torch.ones_like(input)
+    else:
+        weight = weight.expand_as(input)
+
+    if eps is None:
+        eps = torch.finfo(input.dtype).eps
+
+    output = torch.empty_like(input)
+
+    kernel = _cached_make(ntops.kernels.rms_norm.premake, input.ndim, normalized_shape)
+
+    kernel(input, weight, eps, output, math.prod(normalized_shape))
+
+    return output
+
+
+def rotary_position_embedding(
+    input, sin_table, cos_table, interleaved=True, inplace=False
+):
+    if inplace:
+        output = input
+    else:
+        output = torch.empty_like(input)
+
+    batch_size, _, num_heads, _ = input.shape
+
+    sin_table = sin_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+    cos_table = cos_table[None, :, None, :].expand(batch_size, -1, num_heads, -1)
+
+    kernel = _cached_make(
+        ntops.kernels.rotary_position_embedding.premake,
+        input.ndim,
+        interleaved=interleaved,
+        num_warps=1,
+    )
+
+    kernel(input, sin_table, cos_table, output)
 
     return output
 
@@ -347,7 +401,7 @@ def rsqrt(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.rsqrt.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.rsqrt.premake, input.ndim)
 
     kernel(input, out)
 
@@ -415,7 +469,9 @@ def scaled_dot_product_attention(
 
     output = torch.empty_like(query, dtype=value.dtype)
 
-    kernel = ntops.kernels.scaled_dot_product_attention.make(with_kv_cache)
+    kernel = _cached_make(
+        ntops.kernels.scaled_dot_product_attention.premake, with_kv_cache
+    )
 
     if with_kv_cache:
         kernel(
@@ -442,7 +498,7 @@ def sigmoid(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.sigmoid.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.sigmoid.premake, input.ndim)
 
     kernel(input, out)
 
@@ -455,7 +511,7 @@ def silu(input, inplace=False):
     else:
         output = torch.empty_like(input)
 
-    kernel = ntops.kernels.silu.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.silu.premake, input.ndim)
 
     kernel(input, output)
 
@@ -466,7 +522,7 @@ def sin(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.sin.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.sin.premake, input.ndim)
 
     kernel(input, out)
 
@@ -478,7 +534,7 @@ def softmax(input, dim, dtype=None):
 
     output = torch.empty_like(input, dtype=tensor_dtype)
 
-    kernel = ntops.kernels.softmax.make(input.ndim, dim)
+    kernel = _cached_make(ntops.kernels.softmax.premake, input.ndim, dim)
 
     kernel(input, output)
 
@@ -489,7 +545,7 @@ def sub(input, other, *, alpha=1, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.sub.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.sub.premake, input.ndim)
 
     kernel(input, other, alpha, out)
 
@@ -500,8 +556,20 @@ def tanh(input, *, out=None):
     if out is None:
         out = torch.empty_like(input)
 
-    kernel = ntops.kernels.tanh.make(input.ndim)
+    kernel = _cached_make(ntops.kernels.tanh.premake, input.ndim)
 
     kernel(input, out)
 
     return out
+
+
+@functools.cache
+def _cached_make(
+    premake, *args, num_warps=None, num_stages=None, max_num_configs=None, **keywords
+):
+    return ninetoothed.make(
+        *premake(*args, **keywords),
+        num_warps=num_warps,
+        num_stages=num_stages,
+        max_num_configs=max_num_configs,
+    )

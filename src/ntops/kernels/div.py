@@ -1,6 +1,5 @@
 import functools
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
@@ -19,8 +18,9 @@ def floor_application(input, other, output):
     output = ntl.floor(input / other)  # noqa: F841
 
 
-@functools.cache
-def make(ndim, rounding_mode):
+def premake(ndim, rounding_mode, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, block_size=block_size)
+
     if rounding_mode == "trunc":
         application = trunc_application
     elif rounding_mode == "floor":
@@ -28,6 +28,10 @@ def make(ndim, rounding_mode):
     else:
         application = default_application
 
-    tensors = (Tensor(ndim), Tensor(ndim), Tensor(ndim))
+    tensors = (
+        Tensor(ndim, dtype=dtype),
+        Tensor(ndim, dtype=dtype),
+        Tensor(ndim, dtype=dtype),
+    )
 
-    return ninetoothed.make(arrangement, application, tensors)
+    return arrangement_, application, tensors

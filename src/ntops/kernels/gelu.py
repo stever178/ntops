@@ -1,7 +1,6 @@
 import functools
 import math
 
-import ninetoothed
 import ninetoothed.language as ntl
 from ninetoothed import Tensor
 
@@ -27,13 +26,14 @@ def tanh_application(input, output):
     )
 
 
-@functools.cache
-def make(ndim, approximate):
+def premake(ndim, approximate, dtype=None, block_size=None):
+    arrangement_ = functools.partial(arrangement, block_size=block_size)
+
     if approximate == "tanh":
         application = tanh_application
     else:
         application = default_application
 
-    tensors = (Tensor(ndim), Tensor(ndim))
+    tensors = (Tensor(ndim, dtype=dtype), Tensor(ndim, dtype=dtype))
 
-    return ninetoothed.make(arrangement, application, tensors)
+    return arrangement_, application, tensors
