@@ -9,8 +9,7 @@ def arrangement(*tensors, block_size=None):
 
     assert all(tensor.ndim == ndim or tensor.ndim == 0 for tensor in tensors)
 
-    block_shape = tuple(1 for _ in range(ndim - 1)) + (block_size,)
-
     return tuple(
-        tensor.tile(block_shape) if tensor.ndim != 0 else tensor for tensor in tensors
+        tensor.flatten().tile((block_size,)) if tensor.ndim != 0 else tensor
+        for tensor in tensors
     )
